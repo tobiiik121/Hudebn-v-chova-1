@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>Ryskuj od Tobiho</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f0f0f5; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+h1 { text-align: center; margin: 20px; }
+#teams { margin-bottom: 20px; font-size: 18px; display:flex; flex-wrap: wrap; justify-content:center; gap:15px; }
+.team { font-weight: bold; }
+table { border-collapse: collapse; margin-bottom: 30px; }
+td { border: 2px solid #333; padding: 20px; text-align: center; width: 120px; height: 60px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; border-radius: 8px; }
+td:hover { opacity: 0.8; }
+td[data-points="100"] { background: #4CAF50; }
+td[data-points="200"] { background: #2196F3; }
+td[data-points="300"] { background: #FF9800; }
+td[data-points="400"] { background: #9C27B0; }
+td[data-points="500"] { background: #f44336; }
+
+#questionBox {
+  position: fixed;
+  top:0;
+  left:0;
+  width:100vw;
+  height:100vh;
+  background: rgba(0,0,0,0.9);
+  color: white;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 1000;
+}
+#questionText { font-size: 28px; margin-bottom: 20px; }
+#answerText { font-size: 22px; font-weight: bold; margin: 15px; }
+
+button { margin: 8px; padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background: #4CAF50; color: white; }
+button:hover { background:#45a049; }
+#closeQuestion { background:#f44336; }
+#closeQuestion:hover { background:#d32f2f; }
+
+select { padding:5px; font-size:16px; margin-left:5px; }
+nav { width:100%; background:#333; color:white; padding:10px; display:flex; justify-content:space-around; align-items:center; flex-wrap: wrap; }
+nav label { color:white; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<!-- Výběr týmů -->
+<nav>
+<div>
+<label>Počet týmů:</label>
+<select id="selectNumTeams">
+  <option value="2" selected>2</option>
+  <option value="3">3</option>
+  <option value="4">4</option>
+</select>
+</div>
+<div>
+<label>Aktuální tým:</label>
+<select id="selectTeam"></select>
+</div>
+</nav>
+
+<h1>Ryskuj od Tobiho</h1>
+
+<div id="teams">
+  <span class="team" id="score1">Tým 1: <span class="scoreValue">0</span></span>
+  <span class="team" id="score2">Tým 2: <span class="scoreValue">0</span></span>
+  <span class="team" id="score3">Tým 3: <span class="scoreValue">0</span></span>
+  <span class="team" id="score4">Tým 4: <span class="scoreValue">0</span></span>
+</div>
+
+<table id="gameTable">
+<thead>
+<tr>
+<th>Nástroje</th>
+<th>Písničky</th>
+<th>Hudební pojmy</th>
+<th>Skladatelé</th>
+<th>Hudební zvuky</th>
+</tr>
+</thead>
+<tbody>
+<tr><td data-category="Nastroje" data-points="100">100</td><td data-category="Pisnicky" data-points="100">100</td><td data-category="Pojmy" data-points="100">100</td><td data-category="Skladatele" data-points="100">100</td><td data-category="Zvuky" data-points="100">100</td></tr>
+<tr><td data-category="Nastroje" data-points="200">200</td><td data-category="Pisnicky" data-points="200">200</td><td data-category="Pojmy" data-points="200">200</td><td data-category="Skladatele" data-points="200">200</td><td data-category="Zvuky" data-points="200">200</td></tr>
+<tr><td data-category="Nastroje" data-points="300">300</td><td data-category="Pisnicky" data-points="300">300</td><td data-category="Pojmy" data-points="300">300</td><td data-category="Skladatele" data-points="300">300</td><td data-category="Zvuky" data-points="300">300</td></tr>
+<tr><td data-category="Nastroje" data-points="400">400</td><td data-category="Pisnicky" data-points="400">400</td><td data-category="Pojmy" data-points="400">400</td><td data-category="Skladatele" data-points="400">400</td><td data-category="Zvuky" data-points="400">400</td></tr>
+<tr><td data-category="Nastroje" data-points="500">500</td><td data-category="Pisnicky" data-points="500">500</td><td data-category="Pojmy" data-points="500">500</td><td data-category="Skladatele" data-points="500">500</td><td data-category="Zvuky" data-points="500">500</td></tr>
+</tbody>
+</table>
+
+<div id="questionBox">
+<div id="questionText"></div>
+<button id="showAnswer">Ukázat odpověď</button>
+<div id="answerText"></div>
+<button id="teamA">Přičíst body</button>
+<button id="closeQuestion">Zavřít</button>
+</div>
+
+<script>
+const questions = {
+  "Nastroje": {
+    100: { q: "Na jaký nástroj hraje bubeník?", a: "Bicí" },
+    200: { q: "Na co hraje houslista?", a: "Housle" },
+    300: { q: "Jaký nástroj má klapky černé a bílé?", a: "Klavír" },
+    400: { q: "Jaký nástroj má struny a hraje se smyčcem?", a: "Violoncelllo" },
+    500: { q: "Jaký nástroj nosí vojáci na pochody?", a: "Trubka" }
+  },
+  "Pisnicky": {
+    100: { q: "Doplň: Prší, prší, jen se ___", a: "leje" },
+    200: { q: "Doplň: Skákal ___ přes oves", a: "pes" },
+    300: { q: "Jak se jmenuje naše hymna?", a: "Kde domov můj" },
+    400: { q: "Doplň: Pec nám spadla, pec nám spadla, kdo pak nám ji ___", a: "postaví" },
+    500: { q: "Doplň: Běží liška k ___", a: "Táboru" }
+  },
+  "Pojmy": {
+    100: { q: "Jak se jmenují znaky, kterými zapisujeme hudbu?", a: "Noty" },
+    200: { q: "Jak se jmenuje čárka, která odděluje takty?", a: "Taktová čára" },
+    300: { q: "Jak se nazývá rychlost hudby?", a: "Tempo" },
+    400: { q: "Co znamená forte (f)?", a: "Hlasitě" },
+    500: { q: "Co znamená piano (p)?", a: "Tiše, slabě" }
+  },
+  "Skladatele": {
+    100: { q: "Kdo složil 'Malou noční hudbu'?", a: "Mozart" },
+    200: { q: "Kdo složil českou hymnu?", a: "František Škroup" },
+    300: { q: "Kdo složil 'Srdce nehasnou'?", a: "Karel Gott" },
+    400: { q: "Kdo složil 'Kozla'?", a: "Jaromír Nohavica" },
+    500: { q: "V jaké písničce Eminem dal rekord s nejvíc zazpívanými slovy?", a: "Rap God" }
+  },
+  "Zvuky": {
+    100: { q: "Jaký zvuk vydává triangl?", a: "Cink" },
+    200: { q: "Jaký zvuk vydají činely?", a: "Crash / třesk" },
+    300: { q: "Jaký zvuk má buben?", a: "Bum" },
+    400: { q: "Jaký zvuk má zvonek?", a: "Cink-cink" },
+    500: { q: "Jaký zvuk má kytara?", a: "Brn, drn" }
+  }
+};
+
+let currentCell = null;
+let currentTeam = 1;
+let numTeams = 2;
+
+const table = document.getElementById('gameTable');
+const questionBox = document.getElementById('questionBox');
+const questionText = document.getElementById('questionText');
+const answerText = document.getElementById('answerText');
+const showAnswerBtn = document.getElementById('showAnswer');
+const closeQuestionBtn = document.getElementById('closeQuestion');
+const teamABtn = document.getElementById('teamA');
+const selectTeam = document.getElementById('selectTeam');
+const selectNumTeams = document.getElementById('selectNumTeams');
+
+function updateTeamSelection() {
+  selectTeam.innerHTML = '';
+  for (let i = 1; i <= numTeams; i++) {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = 'Tým ' + i;
+    selectTeam.appendChild(option);
+  }
+  currentTeam = parseInt(selectTeam.value);
+}
+
+updateTeamSelection();
+
+selectNumTeams.addEventListener('change', () => {
+  numTeams = parseInt(selectNumTeams.value);
+  updateTeamSelection();
+});
+
+selectTeam.addEventListener('change', () => {
+  currentTeam = parseInt(selectTeam.value);
+});
+
+table.addEventListener('click', e => {
+  const cell = e.target.closest('td');
+  if (!cell || cell.dataset.used) return;
+  const category = cell.dataset.category;
+  const points = parseInt(cell.dataset.points);
+  currentCell = cell;
+  questionText.textContent = questions[category][points].q;
+  answerText.textContent = '';
+  questionBox.style.display = 'flex';
+});
+
+showAnswerBtn.onclick = () => {
+  if (currentCell) {
+    const category = currentCell.dataset.category;
+    const points = parseInt(currentCell.dataset.points);
+    answerText.textContent = questions[category][points].a;
+  }
+};
+
+teamABtn.onclick = () => {
+  if (currentCell) {
+    const points = parseInt(currentCell.dataset.points);
+    const scoreEl = document.querySelector('#score' + currentTeam + ' .scoreValue');
+    scoreEl.textContent = parseInt(scoreEl.textContent) + points;
+
+    currentCell.style.background = "#777";
+    currentCell.style.pointerEvents = "none";
+    currentCell.dataset.used = "true";
+    currentCell = null;
+
+    currentTeam++;
+    if (currentTeam > numTeams) currentTeam = 1;
+    selectTeam.value = currentTeam;
+  }
+};
+
+closeQuestionBtn.onclick = () => { questionBox.style.display = 'none'; };
+</script>
+
+</body>
+</html>
